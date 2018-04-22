@@ -30,7 +30,7 @@ function readLineAsync(message) {
 }
 
 function showMainMenu() {
-    console.log("================ Easy proxy config ================");
+    console.log("================ Easy proxy config tool ================");
     console.log("1: Press '1' to configure proxy with login and password.");
     console.log("2: Press '2' to configure proxy without credentials.");
     console.log("3: Press '3' to remove all proxies configurations.");
