@@ -2,15 +2,21 @@ const fs = require('fs');
 const readline = require('readline');
 const os = require('os');
 const util = require('util');
-
-let config = {stdio: 'inherit', shell: true};
-const exec = util.promisify(require('child_process').exec);
+const asyncUnlink = util.promisify(fs.unlink);
+const config = {shell: true};
+const spawn = require('child_process').spawnSync;
 
 const gradlePath = `${os.homedir()}/.gradle/gradle.properties`;
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+
+function exec(cmd) {
+    let result = spawn(cmd, config);
+    console.log('stdout:', result.stdout);
+    console.log('stderr:', result.stderr);
+}
 
 function readLineAsync(message) {
     return new Promise((resolve) => {
@@ -21,6 +27,7 @@ function readLineAsync(message) {
 }
 
 function showMainMenu() {
+    console.log("================ Easy proxy config ================");
     console.log("1: Press '1' to configure proxy with login and password.");
     console.log("2: Press '2' to configure proxy without credentials.");
     console.log("3: Press '3' to remove all proxies configurations.");
@@ -28,7 +35,6 @@ function showMainMenu() {
 }
 
 function showProxyTypeMenu() {
-    console.log("================ Easy proxy config ================");
     console.log("1: Press '1' to configure Gradle proxy.");
     console.log("2: Press '2' to configure Git proxy.");
     console.log("3: Press '3' to configure Npm proxy.");
@@ -76,36 +82,24 @@ async function configureGradle(user, password, url, port, authentication) {
     });
 }
 
-async function configureNpm(proxyUrl) {
+function configureNpm(proxyUrl) {
     console.log(`Npm proxy requested: ${proxyUrl}`);
-
-    const {stdout, stderr} = await exec(`npm config set proxy ${proxyUrl}`, config);
-    console.log('stdout:', stdout);
-    console.log('stderr:', stderr);
-
-    const {stdout2, stderr2} = await exec('npm config get proxy', config);
-    console.log('stdout:', stdout2);
-    console.log('stderr:', stderr2);
-
+    exec(`npm config set proxy ${proxyUrl}`);
+    exec('npm config get proxy');
     console.log(`Npm proxy added`);
 }
 
-async function configureGit(proxyUrl) {
+function configureGit(proxyUrl) {
     console.log(`Git proxy requested: ${proxyUrl}`);
-
-    const {stdout, stderr} = await exec(`git config --global http.proxy ${proxyUrl}`, config);
-    console.log('stdout:', stdout);
-    console.log('stderr:', stderr);
-
-    const {stdout2, stderr2} = await exec(`git config --global --get-regexp http.*`, config);
-    console.log('stdout:', stdout2);
-    console.log('stderr:', stderr2);
-
+    exec(`git config --global http.proxy ${proxyUrl}`);
+    exec(`git config --global --get-regexp http.*`);
     console.log(`Git proxy added`);
 }
 
-async function removeAllProxies() {
-    fs.unlink(gradlePath, function (err) {
+async function removeGradle() {
+    try {
+        await asyncUnlink(gradlePath);
+    } catch (err) {
         if (err && err.code === 'ENOENT') {
             // file doens't exist
             console.info("Global gradle.properties file doesn't exist, won't remove it.");
@@ -115,25 +109,27 @@ async function removeAllProxies() {
         } else {
             console.info(`Global gradle.properties removed`);
         }
-    });
+    }
+}
 
+function removeNpm() {
     console.log(`Removing Npm proxy.`);
-    const {stdout, stderr} = await exec(`npm config delete proxy`, config);
-    console.log('stdout:', stdout);
-    console.log('stderr:', stderr);
-    const {stdout2, stderr2} = await exec(`npm config get proxy`, config);
-    console.log('stdout:', stdout2);
-    console.log('stderr:', stderr2);
+    exec(`npm config delete proxy`);
+    exec(`npm config get proxy`);
     console.log(`Npm proxy removed.`);
+}
 
+function removeGit() {
     console.log(`Removing Git proxy.`);
-    const {stdout3, stderr3} = await exec('git config --global --unset http.proxy', config);
-    console.log('stdout:', stdout3);
-    console.log('stderr:', stderr3);
-    const {stdout4, stderr4} = await exec('git config --global --get-regexp http.*', config);
-    console.log('stdout:', stdout4);
-    console.log('stderr:', stderr4);
+    exec('git config --global --unset http.proxy');
+    exec('git config --global --get-regexp http.*');
     console.log(`Git proxy removed.`);
+}
+
+async function removeAllProxies() {
+    await removeGradle();
+    removeNpm();
+    removeGit();
 }
 
 async function getProxyType(user, password, url, port, authentication) {
@@ -192,7 +188,6 @@ async function getProxyUrl() {
     }
     rl.close();
     console.log("Program finished!");
-    process.exit(0);
 }
 
 getProxyUrl()
