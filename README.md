@@ -25,6 +25,7 @@ Menu 2:
 ## Roadmap
 * Add HTTPS configurations in the menu options.
 * Add proxy support for other technologies.
+* Improve the password input security.
 * Make more easy to use.
 
 ## Contributions
