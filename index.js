@@ -3,6 +3,9 @@ const readline = require('readline');
 const os = require('os');
 const util = require('util');
 const asyncUnlink = util.promisify(fs.unlink);
+const asyncWriteFile = util.promisify(fs.writeFile);
+const asyncAppendFile = util.promisify(fs.appendFile);
+const asyncExists = util.promisify(fs.exists);
 const config = {shell: true};
 const spawn = require('child_process').spawnSync;
 
@@ -14,8 +17,8 @@ const rl = readline.createInterface({
 
 function exec(cmd) {
     let result = spawn(cmd, config);
-    console.log('stdout:', result.stdout);
-    console.log('stderr:', result.stderr);
+    console.log('stdout:', result.stdout.toString());
+    console.log('stderr:', result.stderr.toString());
 }
 
 function readLineAsync(message) {
@@ -43,9 +46,11 @@ function showProxyTypeMenu() {
 
 async function configureGradle(user, password, url, port, authentication) {
     let gradleFile;
+
     if (authentication) {
         gradleFile =
             `
+            //Proxy configurations
             user = ${user}
             password = ${password}
             url = ${url}
@@ -65,6 +70,7 @@ async function configureGradle(user, password, url, port, authentication) {
     } else {
         gradleFile =
             `
+            //Proxy configurations
             url = ${url}
             port = ${port}
             systemProp.http.proxyPort=port
@@ -76,10 +82,24 @@ async function configureGradle(user, password, url, port, authentication) {
             systemProp.https.proxyPort=port
             `;
     }
-    fs.writeFile(gradlePath, gradleFile, (err) => {
-        if (err) throw err;
-        console.log('Gradle saved!');
-    });
+
+    if(await asyncExists(gradlePath)) {
+        console.log("A global gradle.properties file found.");
+        console.log("1: Press '1' to create a new");
+        console.log("2: Press '2' to append the proxy configuration to the existing file");
+        let answer = await readLineAsync('Please selection one: ');
+        switch (answer){
+            case '1':
+                await asyncWriteFile(gradlePath, gradleFile);
+                break;
+            case '2':
+                await asyncAppendFile(gradlePath, gradleFile);
+                break;
+        }
+    } else {
+        await asyncWriteFile(gradlePath, gradleFile);
+    }
+    console.log('Gradle saved!');
 }
 
 function configureNpm(proxyUrl) {
@@ -98,7 +118,9 @@ function configureGit(proxyUrl) {
 
 async function removeGradle() {
     try {
+        console.info(`Removing global gradle.properties`);
         await asyncUnlink(gradlePath);
+        console.info(`Global gradle.properties removed`);
     } catch (err) {
         if (err && err.code === 'ENOENT') {
             // file doens't exist
@@ -106,8 +128,6 @@ async function removeGradle() {
         } else if (err) {
             // other errors, e.g. maybe we don't have enough permission
             console.error("Error occurred while trying to remove global gradle.properties file");
-        } else {
-            console.info(`Global gradle.properties removed`);
         }
     }
 }
