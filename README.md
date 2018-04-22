@@ -26,6 +26,7 @@ Menu 2:
 * Add HTTPS configurations in the menu options.
 * Add proxy support for other technologies.
 * Improve the password input security.
+* Improve the menu navigation.
 * Make more easy to use.
 
 ## Contributions
