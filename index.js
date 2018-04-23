@@ -48,38 +48,30 @@ async function configureGradle(user, password, url, port, authentication) {
     let gradleFile;
 
     if (authentication) {
-        gradleFile =
+        gradleFile = 
             `
-            //Proxy configurations
-            user = ${user}
-            password = ${password}
-            url = ${url}
-            port = ${port}
-            systemProp.http.proxyPort=port
+            systemProp.https.proxyUser=${user}
+            systemProp.https.proxyPassword=${password}
+            systemProp.http.proxyUser=${user}
+            systemProp.http.proxyPassword=${password}
+            systemProp.http.proxyHost=${url}
+            systemProp.http.proxyPort=${port}
+            systemProp.https.proxyHost=${url}
+            systemProp.https.proxyPort=${port}
             org.gradle.daemon=true
-            systemProp.http.proxyUser=user
             org.gradle.parallel=true
-            systemProp.http.proxyPassword=password
-            org.gradle.jvmargs=-Xmx1536m
-            systemProp.https.proxyPassword=password
-            systemProp.https.proxyHost=url
-            systemProp.http.proxyHost=url
-            systemProp.https.proxyPort=port
-            systemProp.https.proxyUser=user
+            org.gradle.jvmargs=-Xmx1536m            
             `;
     } else {
-        gradleFile =
+        gradleFile = 
             `
-            //Proxy configurations
-            url = ${url}
-            port = ${port}
-            systemProp.http.proxyPort=port
+            systemProp.http.proxyHost=${url}
+            systemProp.http.proxyPort=${port}
+            systemProp.https.proxyHost=${url}
+            systemProp.https.proxyPort=${port}
             org.gradle.daemon=true
             org.gradle.parallel=true
-            org.gradle.jvmargs=-Xmx1536m
-            systemProp.https.proxyHost=url
-            systemProp.http.proxyHost=url
-            systemProp.https.proxyPort=port
+            org.gradle.jvmargs=-Xmx1536m       
             `;
     }
 
