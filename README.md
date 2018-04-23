@@ -28,9 +28,10 @@ Menu 2:
 * Improve the password input security.
 * Improve the menu navigation.
 * Make more easy to use.
+* Make a proxy server bright with proxy authentication.
 
 ## Contributions
-I made this code using only Node.js libraries to avoid installations of external packages. I'm considering that the NPM does't working because it is behind of a proxy. You need keep that in mind to contribute to this project.
+I made this code using only Node.js libraries to avoid installations of external packages. I'm considering that the NPM does't working because it is behind of a proxy. You need keep this in mind to contribute to this project.
 * Clone this repository.
 * Implement the changes.
 * Make a pull request.
